@@ -103,8 +103,7 @@ StatsAction.prototype.act = function (rstream, filename){
   var end_state_started = false
     , start_byte = 0
     , incomplete_line = ""
-    , players = []
-    , current_player = -1
+    , proportions = []
     , data_events = false
     ;
   
@@ -120,14 +119,16 @@ StatsAction.prototype.act = function (rstream, filename){
   function parseBuffer(buffer){
     data_events = true;
 
-    var match = buffer.toString().match(/done\.\n/g);
+    if (!buffer) return;
+
+    var match = buffer.toString().match(/Done simulation\.\n/g);
 
     if (end_state_started){
       start_byte = 0;
     }
     else if (match && match.length > 0) {
       end_state_started = true;
-      start_byte = buffer.indexOf("done.\n");
+      start_byte = buffer.indexOf("Done simulation.\n");
     }
     
     if (end_state_started){
@@ -137,96 +138,35 @@ StatsAction.prototype.act = function (rstream, filename){
       
       lines.forEach(function (line){
         var matches;
-        matches = line.match(/^\s*Player (\d+)\s*$/);
+        matches = line.match(/^\s*Strategy (\d+) \((.+)\):\s*$/);
         if (matches && matches.length){
-          current_player = parseInt(matches[1], 10);
-          players[current_player] = {counts: [], proportions: []};
-          return;
-        }
-        
-        matches = line.match(/^\s*Counts: (.+)\s*$/);
-        if (matches && matches.length){
-          players[current_player].counts.push(matches[1].trim()
-                                                        .split(/\s+/)
-                                                        .map(function (prop){
-                                                          return parseFloat(prop.trim());
-                                                        }));
-        }
-        
-        matches = line.match(/^\s*Proportions: (.+)\s*$/);
-        if (matches && matches.length){
-          players[current_player].proportions.push(matches[1].trim()
-                                                             .split(/\s+/)
-                                                             .map(function (prop){
-                                                               return parseFloat(prop.trim());
-                                                             }));
+          var strategy = parseInt(matches[1].trim(), 10);
+          proportions.push({strategy: strategy, proportion: parseFloat(matches[2].trim())});
         }
       });
     }
   }
 
-  function parsePlayers(players){
+  function parseProportions(proportions){
     var tolerance = args.tol || 0.0005;
 
-    var retData = {
-      UCMap: {}
-    , CMap: {}
-    , RMap: {}
-    };
+    var retData = [];
 
-    if (!players || players.length === 0){
+    if (!proportions || proportions.length === 0){
       return retData;
     }
       
-    var states = players[0].proportions.length;
-    var situations = players[1].proportions.length / states;
-    var messages = players[2].proportions.length / situations;
-    var actions = states + 1;
+    var states = 2
+      , messages = 2
+      , actions = 3
+      ;
     
     var i, j;
-    for (i = 0; i < states; i++){
-      retData.UCMap['q' + i] = {};
-      retData.CMap['r' + i] = {};
-      for (j = 0; j < situations; j++){
-        retData.CMap['r' + i]['s' + j] = {};
-      }
-    }
-    
-    for (i = 0; i < messages; i++){
-      retData.RMap['m' + i] = {};
-      for (j = 0; j < situations; j++){
-        retData.RMap['m' + i]['s' + j] = {};
-      }
-    }
         
-    players[0].proportions.forEach(function (props, q){
-      props.forEach(function (prop, r){
-        if (prop > tolerance){
-          retData.UCMap['q' + q]['r' + r] = prop;
-        }
-      });
-    });
-    
-    players[1].proportions.forEach(function (props, rs){
-      var s = rs >= states ? 1 : 0;
-      var r = rs - (s * states);
-    
-      props.forEach(function (prop, m){
-        if (prop > tolerance){
-          retData.CMap['r' + r]['s' + s]['m' + m] = prop;
-        }
-      });
-    });
-    
-    players[2].proportions.forEach(function (props, ms){
-      var s = ms >= messages ? 1 : 0;
-      var m = ms - (s * messages);
-      
-      props.forEach(function (prop, a){
-        if (prop > tolerance){
-          retData.RMap['m' + m]['s' + s]['a' + a] = prop;
-        }
-      });
+    proportions.forEach(function (prop, q){
+      if (prop.proportion > tolerance){
+        retData.push(prop);
+      }
     });
 
     return retData;
@@ -238,7 +178,7 @@ StatsAction.prototype.act = function (rstream, filename){
   
   rstream.on("end", function (){
     if (data_events){
-      self.emit("data", {data: parsePlayers(players), file: filename});
+      self.emit("data", {data: parseProportions(proportions), file: filename});
     }
     self.emit("end");
   });
@@ -261,6 +201,8 @@ if (fs.statSync(args.dir).isDirectory()){
     console.log("Opened the output directory.");
 
     var pond = new FilePond(files.map(function (file){ return path.join(args.dir, file); }), new StatsAction());
+
+    console.log(pond.file_queue.length);
     
     pond.on("file", function (file){
       console.log("Parsing %s...", file);
@@ -274,13 +216,15 @@ if (fs.statSync(args.dir).isDirectory()){
     pond.on("data", dataWriter);
     
     pond.on("end", function (){
-      endWstream();
+      endWStream();
       console.log("done.");
     });
     
     go = function (){
       pond.run();
-    }  
+    };  
+
+    actuallyStart();
   });
 }
 else {
@@ -314,18 +258,22 @@ else {
       })
       ;
   }
+
+  actuallyStart();
 }
 
-wstream = fs.createWriteStream(args.out);
-wstream.on("error", function (err){
-  console.log("Write stream error:");
-  console.log(err);
-});
+function actuallyStart(){
+  wstream = fs.createWriteStream(args.out);
+  wstream.on("error", function (err){
+    console.log("Write stream error:");
+    console.log(err);
+  });
 
-wstream.on("open", function (){
-  wstream.write("[\n");
-  go();
-});
+  wstream.on("open", function (){
+    wstream.write("[\n");
+    go();
+  });
+}
 
 function dataWriter(data){
   console.log("Writing data for %s", data.file);

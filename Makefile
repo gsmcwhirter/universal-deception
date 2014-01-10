@@ -1,7 +1,7 @@
 CFLAGS=-std=c11 -g -fopenmp -O2 -Wall -Wextra -Ideps -Ideps/simulations -DNDEBUG $(OPTFLAGS)
 LFLAGS=-Lbuild -lm $(OPTLIBS)
 
-SOURCES=$(wildcard src/replicator_*.c)
+SOURCES=$(wildcard src/sim_library.c src/replicator_*.c)
 OBJECTS=$(patsubst %.c,%.o,$(SOURCES))
 DEPSOURCES=$(wildcard deps/*.c)
 DEPOBJECTS=$(patsubst %.c,%.o,$(DEPSOURCES))
@@ -10,6 +10,7 @@ LIBS=build/libreplicator.a build/libreplicator.so
 
 TEST_SRC=$(wildcard tests/*_tests.c)
 TESTS=$(patsubst %.c,%,$(TEST_SRC))
+TEST_DEPS=src/sim_library.c
 
 TARGET=build/replicator_sim
 
@@ -38,13 +39,13 @@ build:
 	@mkdir -p build
 
 $(TESTS):
-	$(CC) $(CFLAGS) $@.c $(LFLAGS) -o $@ 
+	$(CC) $(CFLAGS) $(TEST_DEPS) $@.c $(LFLAGS) -o $@ 
 
 # The Unit Tests
 #.PHONY: test demo demov
 .PHONY: test clean cleandeps
-test: CFLAGS += -Itests
-test: LFLAGS += -Lbuild -lreplicator -lurnlearning
+test: CFLAGS += -Itests -Isrc
+test: LFLAGS += -Lbuild -lreplicator
 test: $(TESTS)
 	sh ./tests/runtests.sh
 	

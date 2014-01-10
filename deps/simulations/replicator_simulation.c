@@ -50,8 +50,12 @@ replicator_dynamics_setup()
 }
 
 popcollection_t *
-replicator_dynamics(game_t *game, popcollection_t *start_pops, double alpha, double effective_zero, int max_generations, cache_mask caching, cb_func on_generation)
+replicator_dynamics(game_t *game, popcollection_t *start_pops, double alpha, double effective_zero, int max_generations, cache_mask caching, cb_func on_generation, FILE *outfile)
 {   
+    if (outfile == NULL){
+        outfile = stdout;
+    }
+
     int free_start = 0;
     assert(game != NULL);
     if (game == NULL){
@@ -158,7 +162,7 @@ replicator_dynamics(game_t *game, popcollection_t *start_pops, double alpha, dou
         }
         
         if (on_generation != NULL){
-            on_generation(game, generation, next_pops);
+            on_generation(game, generation, next_pops, outfile);
         }
     } while((max_generations == 0 || generation < max_generations) && !PopCollection_equal(curr_pops, next_pops, effective_zero));
     
