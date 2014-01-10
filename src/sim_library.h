@@ -13,6 +13,7 @@
 double * get_state_probs();
 int player_response(int player, int strategy, int input);
 int base_n_bit(const int base, const int number, const int bit);
-double * game_payoffs(int players, int *profile);
+double * game_payoffs_1(int players, int *profile);
+double * game_payoffs_2(int players, int *profile);
 
 #endif

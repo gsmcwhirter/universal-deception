@@ -28,6 +28,7 @@ int dump_to_files = 0;
 unsigned long duplications = 1;
 double alpha = 0.0;
 double effective_zero = 0.00000001;
+int payoff_scheme = 1;
 //long threads = 1;
 
 void
@@ -167,6 +168,19 @@ handle_zero(command_t *self)
     }
 }
 
+static void
+handle_payoff(command_t *self)
+{
+    if (self->arg != NULL){
+        errno = 0;
+        payoff_scheme = (int)strtol(self->arg, NULL, 0);
+        if (errno || payoff_scheme < 0 || payoff_scheme > 2){
+            printf("Payoff scheme is invalid.\n");
+            exit(EXIT_FAILURE);
+        }
+    }
+}
+
 // static void
 // handle_threads(command_t *self)
 // {
@@ -194,6 +208,7 @@ main(int argc, char *argv[])
     command_option(&options, "-v", "--verbose", "enable verbose stuff", handle_verbose);
     command_option(&options, "-f", "--files", "dump output to files", handle_files);
     command_option(&options, "-N", "--duplications <arg>", "number of duplications to run (default 1)", handle_duplications);
+    command_option(&options, "-p", "--payoff <arg>", "which payoff scheme to use (options 1, 2, default 1)", handle_payoff);
     command_option(&options, "-a", "--alpha <arg>", "alpha parameter for discrete dynamics (default 0.0)", handle_alpha);
     command_option(&options, "-z", "--effective_zero <arg>", "effective zero-level (default 0.00000001)", handle_zero);
     //command_option(&options, "-M", "--threads <arg>", "number of threads to use (openmp, default 1)", handle_threads);
@@ -248,7 +263,20 @@ main(int argc, char *argv[])
     printf("\n");
     
     char *prefix = "\t";
-    game_t *game = Game_create(2, 1, &total_strategies, game_payoffs);
+    game_t *game;
+    switch (payoff_scheme){
+        case 1:
+            game = Game_create(2, 1, &total_strategies, game_payoffs_1);
+            break;
+        case 2:
+            game = Game_create(2, 1, &total_strategies, game_payoffs_2);
+            break;
+        default:
+            printf("Unknown payoff scheme specified.");
+            exit(EXIT_FAILURE);
+            break;
+    }
+     
 
     popcollection_t *start_pop;
     popcollection_t *final_pop;
