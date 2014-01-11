@@ -64,7 +64,7 @@ function parseStats(data){
       mixed_combos[mixed_key] = (mixed_combos[mixed_key] || 0) + 1;
     }
 
-    
+
   });
 
   var counts = {};
