@@ -1,13 +1,15 @@
 var args = require("optimist")
-      .usage("$0 --stats <statsfile> --out <outfile>")
-      .demand(["out", "stats"])
-      .alias({"out": "o", "stats": "s"})
+      .usage("$0 --stats <statsfile> --out <outfile> --payoffs <payoffs>")
+      .demand(["out", "stats", "payoffs"])
+      .alias({"out": "o", "stats": "s", "payoffs": "p"})
       .describe({ "out": "The file to output with data."
-                , "stats": "The stats file to parse."})
+                , "stats": "The stats file to parse."
+                , "payoffs": "The payoff scheme used for the simulations (1--3)."})
       .argv
   , fs = require("fs")
   , path = require("path")
   , _ = require("underscore")
+  , lib = require("./stats_lib")
   ;
 
 var data = require(path.resolve(args.stats));
@@ -47,11 +49,19 @@ function parseStats(data){
 
       if (dup.data[0].strategy === 5 || dup.data[0].strategy === 14){
         ret.pure5or14[dup.file] = 'pure5or14';
-        pures[dup.data[0].strategy] = (pures[dup.data[0].strategy] || 0) + 1;
+        if (!pures[dup.data[0].strategy]){
+          pures[dup.data[0].strategy]  = 0;
+        }
+
+        pures[dup.data[0].strategy] += 1;
       }
       else {
         ret.pureOther[dup.file] = 'pureOther';
-        pures[dup.data[0].strategy] = (pures[dup.data[0].strategy] || 0) + 1;
+        if (!pures[dup.data[0].strategy]){
+          pures[dup.data[0].strategy] = 0
+        }
+
+        pures[dup.data[0].strategy] += 1;
       }
     }
     else {
@@ -60,11 +70,13 @@ function parseStats(data){
       }).sort().join(",");
 
       ret.mixed[dup.file] = mixed_key;
+      if (!mixed_combos[mixed_key]){
+        mixed_combos[mixed_key] = {count: 0, pcts_deception: []};
+      }
 
-      mixed_combos[mixed_key] = (mixed_combos[mixed_key] || 0) + 1;
+      mixed_combos[mixed_key].count += 1;
+      mixed_combos[mixed_key].pcts_deception.push(lib.percentDeception(dup.data, args.payoffs));
     }
-
-
   });
 
   var counts = {};

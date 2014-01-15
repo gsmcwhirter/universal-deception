@@ -81,14 +81,14 @@ test_game_payoffs_1()
 	profile[0] = 8; //2
 	profile[1] = 0; //0
 	payoffs = game_payoffs_1(2, profile);
-	mu_assert(*(payoffs + 0) == 4.25, "Sender payoffs 1 for 3,0 failed.");
-	mu_assert(*(payoffs + 1) == 5.5, "Receiver payoffs 1 for 3,0 failed.");
+	mu_assert(*(payoffs + 0) == 4.25, "Sender payoffs 1 for 8,0 failed.");
+	mu_assert(*(payoffs + 1) == 5.5, "Receiver payoffs 1 for 8,0 failed.");
 
 	profile[0] = 8; //2
 	profile[1] = 8; //2
 	payoffs = game_payoffs_1(2, profile);
-	mu_assert(*(payoffs + 0) == 6.0, "Sender payoffs 1 for 4,0 failed.");
-	mu_assert(*(payoffs + 1) == 6.0, "Receiver payoffs 1 for 4,0 failed.");
+	mu_assert(*(payoffs + 0) == 6.0, "Sender payoffs 1 for 8,8 failed.");
+	mu_assert(*(payoffs + 1) == 6.0, "Receiver payoffs 1 for 8,8 failed.");
 
 	return NULL;
 }
@@ -120,14 +120,53 @@ test_game_payoffs_2()
 	profile[0] = 8; //2
 	profile[1] = 0; //0
 	payoffs = game_payoffs_2(2, profile);
-	mu_assert(*(payoffs + 0) == 3.25, "Sender payoffs 2 for 3,0 failed.");
-	mu_assert(*(payoffs + 1) == 5.5, "Receiver payoffs 2 for 3,0 failed.");
+	mu_assert(*(payoffs + 0) == 3.25, "Sender payoffs 2 for 8,0 failed.");
+	mu_assert(*(payoffs + 1) == 5.5, "Receiver payoffs 2 for 8,0 failed.");
 
 	profile[0] = 8; //2
 	profile[1] = 8; //2
 	payoffs = game_payoffs_2(2, profile);
-	mu_assert(*(payoffs + 0) == 6.0, "Sender payoffs 2 for 4,0 failed.");
-	mu_assert(*(payoffs + 1) == 6.0, "Receiver payoffs 2 for 4,0 failed.");
+	mu_assert(*(payoffs + 0) == 6.0, "Sender payoffs 2 for 8,8 failed.");
+	mu_assert(*(payoffs + 1) == 6.0, "Receiver payoffs 2 for 8,8 failed.");
+
+	return NULL;
+}
+
+char *
+test_game_payoffs_3()
+{
+	int profile[2];
+	double * payoffs;
+
+	profile[0] = 0;
+	profile[1] = 0;
+	payoffs = game_payoffs_3(2, profile);
+	mu_assert(*(payoffs + 0) == 2.75, "Sender payoffs 3 for 0,0 failed.");
+	mu_assert(*(payoffs + 1) == 2.75, "Receiver payoffs 3 for 0,0 failed.");
+
+	profile[0] = 1;
+	profile[1] = 0;
+	payoffs = game_payoffs_3(2, profile);
+	mu_assert(*(payoffs + 0) == 2.75, "Sender payoffs 3 for 1,0 failed.");
+	mu_assert(*(payoffs + 1) == 2.75, "Receiver payoffs 3 for 1,0 failed.");
+
+	profile[0] = 2;
+	profile[1] = 0;
+	payoffs = game_payoffs_3(2, profile);
+	mu_assert(*(payoffs + 0) == 2.75, "Sender payoffs 3 for 2,0 failed.");
+	mu_assert(*(payoffs + 1) == 2.75, "Receiver payoffs 3 for 2,0 failed.");
+
+	profile[0] = 8; //2
+	profile[1] = 0; //0
+	payoffs = game_payoffs_3(2, profile);
+	mu_assert(*(payoffs + 0) == 3, "Sender payoffs 3 for 8,0 failed.");
+	mu_assert(*(payoffs + 1) == 5.5, "Receiver payoffs 3 for 8,0 failed.");
+
+	profile[0] = 8; //2
+	profile[1] = 8; //2
+	payoffs = game_payoffs_3(2, profile);
+	mu_assert(*(payoffs + 0) == 5.75, "Sender payoffs 3 for 8,8 failed.");
+	mu_assert(*(payoffs + 1) == 5.75, "Receiver payoffs 3 for 8,8 failed.");
 
 	return NULL;
 }
@@ -141,6 +180,7 @@ all_tests()
     mu_run_test(test_player_response);
     mu_run_test(test_game_payoffs_1);
     mu_run_test(test_game_payoffs_2);
+    mu_run_test(test_game_payoffs_3);
 
     return NULL;
 }

@@ -104,3 +104,42 @@ game_payoffs_2(int players, int *profile)
     
     return payoffs;
 }
+
+double * 
+game_payoffs_3(int players, int *profile)
+{
+    double *payoffs = malloc(players * sizeof(double));
+    double prob;
+    int i, state, message, action, sender;
+    
+    for (i = 0; i < players; i++){
+        *(payoffs + i) = 0;
+    }
+
+
+    for (state = 0; state < STATES; state++){
+        prob = state_probs[state];
+
+        for (sender = 0; sender < 2; sender++){
+            //message = base_n_bit(MESSAGES, *(profile + 0), state);
+            //action = base_n_bit(ACTIONS, floor(*(profile + 1) / pow(MESSAGES,STATES)), message);
+            message = player_response(0, *(profile + sender), state);
+            action = player_response(1, *(profile + (1-sender)), message);
+
+            if (action == ACTIONS - 1 && state == 0){
+                *(payoffs + sender) += prob * 6.0 * 0.5;
+                *(payoffs + (1-sender)) += prob * 5.0 * 0.5;
+            }
+            else if (action == ACTIONS - 1 && state == 1){
+                *(payoffs + sender) += prob * 6.0 * 0.5;
+                *(payoffs + (1-sender)) += prob * 6.0 * 0.5;   
+            }
+            else if (state == action){
+                *(payoffs + sender) += prob * 1.0 * 0.5;
+                *(payoffs + (1-sender)) += prob * 10.0 * 0.5;   
+            }
+        }
+    }    
+    
+    return payoffs;
+}
