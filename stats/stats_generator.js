@@ -116,10 +116,10 @@ StatsAction.prototype.act = function (rstream, filename){
     parseBuffer(buffer);
   });
 
-  function parseBuffer(buffer){
+  function parseBuffer(buffer, force_incline){
     data_events = true;
 
-    if (!buffer) return;
+    if (!buffer && !force_incline) return;
 
     var match = buffer.toString().match(/Done simulation\.\n/g);
 
@@ -178,6 +178,7 @@ StatsAction.prototype.act = function (rstream, filename){
   
   rstream.on("end", function (){
     if (data_events){
+      parseBuffer(new Buffer(""), true);
       self.emit("data", {data: parseProportions(proportions), file: filename});
     }
     self.emit("end");

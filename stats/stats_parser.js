@@ -44,7 +44,7 @@ function parseStats(data){
 
     var key;
 
-    if (dup.data.length === 1){
+    if (dup.data.length == 1){
       //pure equilibrium
 
       if (dup.data[0].strategy === 5 || dup.data[0].strategy === 14){
@@ -69,6 +69,10 @@ function parseStats(data){
         return datum.strategy;
       }).sort().join(",");
 
+      if (mixed_key == ''){
+        console.log(dup);
+      }
+
       ret.mixed[dup.file] = mixed_key;
       if (!mixed_combos[mixed_key]){
         mixed_combos[mixed_key] = {count: 0, pcts_deception: []};
@@ -84,5 +88,22 @@ function parseStats(data){
     counts[stat] = Object.keys(ret[stat]).length;
   }
 
-  return [ret, counts, pures, mixed_combos];
+  var deceptive_combos = {};
+  for (var mkey in mixed_combos){
+    if (_.any(mixed_combos[mkey].pcts_deception)){
+      deceptive_combos[mkey] = {
+        total: mixed_combos[mkey].count
+      , deceptive: _.reduce(mixed_combos[mkey].pcts_deception, function (count, pct){
+          if (pct > 0.0) count++;
+
+          return count;
+        }, 0)
+      , mean_deception: _.reduce(mixed_combos[mkey].pcts_deception, function (avg, pct){
+          return avg + pct / mixed_combos[mkey].count; 
+        }, 0)
+      };
+    }
+  }
+
+  return [ret, counts, pures, mixed_combos, deceptive_combos];
 }

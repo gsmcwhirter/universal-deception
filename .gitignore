@@ -16,6 +16,7 @@
 tests/tests.log
 tests/*_tests
 tests/*.serial
+tests/*.dSYM
 
 # Make results
 build
